@@ -42,6 +42,7 @@ jobs:
       - name: Create stable release
         if: ${{ !inputs.prerelease }}
         run: |
+          echo "${{ inputs }}"
           # Check if the pre-release exists for the given tag
           # Get release by tag
           id=$(curl -sb \
