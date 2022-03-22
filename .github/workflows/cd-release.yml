@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Create pre-release
-        if: ${{ github.event.inputs.prerelease == "true" }}
+        if: ${{ github.event.inputs.prerelease == 'true' }}
         run: |
           echo "${{ github.event.inputs.prerelease }}"
           sha=$(git show-ref ${{ env.GIT_TAG_NAME }} | cut -d' ' -f1)
@@ -40,7 +40,7 @@ jobs:
             \"body\":\"$body\", \
             \"prerelease\": true }"
       - name: Create stable release
-        if: ${{ github.event.inputs.prerelease == "false" }}
+        if: ${{ github.event.inputs.prerelease == 'false' }}
         run: |
           echo "${{ github.event.inputs.prerelease }}"
           # Check if the pre-release exists for the given tag
