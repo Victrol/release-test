@@ -19,12 +19,13 @@ env:
 jobs:
   create_release:
     name: Create release for tag
-    runs-on: [ self-hosted, linux ]
+    runs-on: [ linux ]
     steps:
       - uses: actions/checkout@v2
       - name: Create pre-release
         if: ${{ inputs.prerelease }}
         run: |
+          echo "${{ inputs }}"
           sha=$(git show-ref ${{ env.GIT_TAG_NAME }} | cut -d' ' -f1)
           title=$(git log -n 1 --pretty=format:%s $sha)
           body=$(git log --format=%B -n 1 $sha | sed '1,2d')
