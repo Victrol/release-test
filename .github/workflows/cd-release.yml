@@ -25,7 +25,7 @@ jobs:
       - name: Create pre-release
         if: ${{ github.event.inputs.prerelease }}
         run: |
-          echo "${{ github.event.inputs }}"
+          echo "${{ github.event.inputs.prerelease }}"
           sha=$(git show-ref ${{ env.GIT_TAG_NAME }} | cut -d' ' -f1)
           title=$(git log -n 1 --pretty=format:%s $sha)
           body=$(git log --format=%B -n 1 $sha | sed '1,2d')
@@ -42,7 +42,7 @@ jobs:
       - name: Create stable release
         if: ${{ !github.event.inputs.prerelease }}
         run: |
-          echo "${{ github.event.inputs }}"
+          echo "${{ github.event.inputs.prerelease }}"
           # Check if the pre-release exists for the given tag
           # Get release by tag
           id=$(curl -sb \
