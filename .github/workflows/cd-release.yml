@@ -19,7 +19,7 @@ env:
 jobs:
   create_release:
     name: Create release for tag
-    runs-on: [ linux ]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Create pre-release
