@@ -1,0 +1,78 @@
+name: CD / Create release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag of the deployment
+        required: true
+        type: string
+      prerelease:
+        description: If this is a prerelease
+        required: false
+        type: boolean
+        default: true
+
+env:
+  GIT_TAG_NAME: ${{ github.event.inputs.tag }}
+  AUTH: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  create_release:
+    name: Create release for tag
+    runs-on: [ self-hosted, linux ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create pre-release
+        if: ${{ inputs.prerelease }}
+        run: |
+          sha=$(git show-ref ${{ env.GIT_TAG_NAME }} | cut -d' ' -f1)
+          title=$(git log -n 1 --pretty=format:%s $sha)
+          body=$(git log --format=%B -n 1 $sha | sed '1,2d')
+          echo "Creating new pre-release"
+          curl \
+            -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ env.AUTH }}" \
+            https://api.github.com/repos/Victrol/release-test/releases \
+            -d "{\"tag_name\":\"${{ env.GIT_TAG_NAME }}\", \
+            \"name\":\"$title\", \
+            \"body\":\"$body\", \
+            \"prerelease\": true }"
+      - name: Create stable release
+        if: ${{ !inputs.prerelease }}
+        run: |
+          # Check if the pre-release exists for the given tag
+          # Get release by tag
+          id=$(curl -sb \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token ${{ env.AUTH }}" \
+            https://api.github.com/repos/Victrol/release-test/releases/tags/${{ env.GIT_TAG_NAME }} \
+            | grep -m 1 '\"id\"' \
+            | cut -d ':' -f 2 \
+            | cut -d ',' -f 1 \
+            | cut -d ' ' -f 2)
+
+          if [ "$id" != "" ]; then
+            echo "Updating previous pre-release to stable"
+            curl \
+              -X PATCH \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: token ${{ env.AUTH }}" \
+              https://api.github.com/repos/Victrol/release-test/releases/$id \
+              -d "{\"tag_name\":\"${{ env.GIT_TAG_NAME }}\",
+              \"prerelease\": false }"
+          else
+            echo "Creating new stable release"
+            sha=$(git show-ref ${{ env.GIT_TAG_NAME }} | cut -d' ' -f1)
+            title=$(git log -n 1 --pretty=format:%s $sha)
+            body=$(git log --format=%B -n 1 $sha | sed '1,2d')
+            curl \
+              -X POST \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: token ${{  env.AUTH }}" \
+              https://api.github.com/repos/Victrol/release-test/releases \
+              -d "{\"tag_name\":\"${{ env.GIT_TAG_NAME }}\", \
+              \"name\":\"$title\", \
+              \"body\":\"$body\", \
+              \"prerelease\": false }"
+          fi
